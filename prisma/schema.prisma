@@ -1,0 +1,72 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                      String   @id @default(cuid())
+  email                   String   @unique
+  first_name              String?
+  last_name               String?
+  clerk_id                String?  @unique
+  role                    UserRole
+  intermediary_id         String?
+  email_notifications     EmailNotification[]
+
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+
+  @@map("users")
+  @@unique([id, email])
+  @@index([clerk_id])
+}
+
+model EmailNotification {
+  id            String    @id @default(uuid())
+  type          EmailNotificationType
+  recipient_id  String
+  message       String
+  status        NotificationStatus @default(PENDING)
+  priority      NotificationPriority @default(MEDIUM)
+  sent_at       DateTime?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  recipient     User      @relation(fields: [recipient_id], references: [id])
+}
+
+enum UserRole {
+  OSIRIS_ADMIN
+  OSIRIS_USER
+  CLIENT
+  INTERMEDIARY_ADMIN
+}
+
+enum EmailNotificationType {
+  AUTH_EMAIL
+  BVI_SUBMISSION
+  REVIEW_FEEDBACK
+  SUBMISSION_UPDATE
+  SUBMISSION_APPROVAL
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum NotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
